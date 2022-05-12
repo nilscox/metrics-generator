@@ -50,26 +50,26 @@ const memory = async () => {
     `allocating ${mb}MB of memory, releasing in ${Math.round(keep / 60)}min`
   );
 
-  f("/allocate", {
+  await f("/allocate", {
     query: { mb, keep },
   });
 };
 
 const cpu = async () => {
   if (randBool()) {
-    const n = randInt(100) * 1000 * 1000;
+    const n = randInt(1000) * 1000 * 1000;
 
     console.log(`generating ${n} square roots of 2`);
 
-    f("/sqrt2", {
+    await f("/sqrt2", {
       query: { n },
     });
   } else {
-    const n = 30 + randInt(15);
+    const n = 32 + randInt(14);
 
     console.log(`computing fibo(${n})`);
 
-    f("/fibo", {
+    await f("/fibo", {
       query: { n },
     });
   }
@@ -82,7 +82,7 @@ const status = async () => {
 
   console.log(`make query with status code ${status}`);
 
-  f("/status", {
+  await f("/status", {
     query: { status },
   });
 };
@@ -92,13 +92,13 @@ const wait = async () => {
 
   console.log(`making query taking ${time}ms`);
 
-  f("/wait", {
+  await f("/wait", {
     query: { time },
   });
 };
 
 const send = async () => {
-  const mb = randInt(128);
+  const mb = randInt(32);
   const buf = Buffer.allocUnsafe(mb * 1024 * 1024);
   const formData = new FormData();
 
@@ -116,7 +116,7 @@ const send = async () => {
 };
 
 const generate = async () => {
-  const mb = randInt(128);
+  const mb = randInt(32);
 
   console.log(`requesting ${mb}MB of data`);
 
@@ -133,15 +133,20 @@ const main = async () => {
     [15, cpu],
     [5, status],
     [5, wait],
-    [10, send],
-    [10, generate],
+    [3, send],
+    [3, generate],
   ] as const;
 
   const allFunctions = functions.flatMap(([count, f]) => Array(count).fill(f));
 
   while (true) {
     await randItem(allFunctions)();
-    await new Promise((r) => setTimeout(r, 1000));
+
+    const wait = randInt(5 * 1000);
+
+    console.log(`waiting ${wait}ms`);
+
+    await new Promise((r) => setTimeout(r, wait));
   }
 };
 
