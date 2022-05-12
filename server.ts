@@ -90,18 +90,18 @@ const wait: RequestHandler = async (req, res) => {
   res.send(`waited for ${time}ms before sending the response`);
 };
 
-const receivePayload: RequestHandler[] = [
+const receiveData: RequestHandler[] = [
   multer().single("file"),
   (req, res) => {
     if (!req.file) {
       return res.end();
     }
 
-    res.send(`received ${round(req.file.size / (1024 * 1024))}MB of payload`);
+    res.send(`received ${round(req.file.size / (1024 * 1024))}MB of data`);
   },
 ];
 
-const generatePayload: RequestHandler = (req, res) => {
+const generateData: RequestHandler = (req, res) => {
   const mb = parseNum(req.query.mb, 32);
   const buf = Buffer.allocUnsafe(mb * 1024 * 1024);
 
@@ -116,8 +116,13 @@ const main = () => {
   app.use((_req, res, next) => {
     const send = res.send.bind(res);
 
-    res.send = (data: string) => {
-      console.log(data);
+    res.send = (data: string | Buffer) => {
+      if (Buffer.isBuffer(data)) {
+        console.log(`sending ${data.length / (1024 * 1024)}MB of data`);
+      } else {
+        console.log(data);
+      }
+
       return send(data);
     };
 
@@ -130,8 +135,8 @@ const main = () => {
   app.use("/fibo", computeFibo);
   app.use("/status", returnStatus);
   app.use("/wait", wait);
-  app.use("/receive", receivePayload);
-  app.use("/generate", generatePayload);
+  app.use("/send", receiveData);
+  app.use("/generate", generateData);
 
   app.listen(parseInt(PORT), HOST);
   console.info(`app listening on ${HOST}:${PORT}`);

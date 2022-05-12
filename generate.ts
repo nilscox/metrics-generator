@@ -1,4 +1,5 @@
 import fetch from "cross-fetch";
+import FormData, { Stream } from "form-data";
 
 const randInt = (max: number) => {
   return Math.floor(Math.random() * max);
@@ -13,7 +14,10 @@ const randItem = <T>(arr: T[]): T => {
 };
 
 type FetchOpts = {
+  method?: string;
   query?: Record<string, string | number>;
+  headers?: Record<string, string>;
+  body?: BodyInit;
 };
 
 const f = async (route: string, opts?: FetchOpts) => {
@@ -27,7 +31,11 @@ const f = async (route: string, opts?: FetchOpts) => {
   }
 
   try {
-    await fetch(url);
+    return await fetch(url, {
+      method: opts?.method,
+      headers: opts?.headers,
+      body: opts?.body,
+    });
   } catch (error) {
     console.error(error);
     process.exit(1);
@@ -35,12 +43,15 @@ const f = async (route: string, opts?: FetchOpts) => {
 };
 
 const memory = async () => {
-  const mb = randInt(128);
+  const mb = randInt(32);
+  const keep = randInt(60 * 10);
 
-  console.log(`allocating ${mb}MB of memory`);
+  console.log(
+    `allocating ${mb}MB of memory, releasing in ${Math.round(keep / 60)}min`
+  );
 
   f("/allocate", {
-    query: { mb, keep: 5 * 60 },
+    query: { mb, keep },
   });
 };
 
@@ -77,7 +88,7 @@ const status = async () => {
 };
 
 const wait = async () => {
-  const time = randInt(2000);
+  const time = randInt(1300);
 
   console.log(`making query taking ${time}ms`);
 
@@ -86,18 +97,51 @@ const wait = async () => {
   });
 };
 
-const receive = async () => {};
+const send = async () => {
+  const mb = randInt(128);
+  const buf = Buffer.allocUnsafe(mb * 1024 * 1024);
+  const formData = new FormData();
 
-const generate = async () => {};
+  formData.append("file", buf, {
+    contentType: "text/plain",
+    filename: "file",
+  });
+
+  console.log(`sending ${mb}MB of data`);
+
+  await f("/send", {
+    method: "POST",
+    body: formData as any,
+  });
+};
+
+const generate = async () => {
+  const mb = randInt(128);
+
+  console.log(`requesting ${mb}MB of data`);
+
+  await f("/generate", {
+    query: { mb },
+  });
+};
 
 const { BASE_URL = "http://localhost:8080" } = process.env;
 
 const main = async () => {
-  const functions = [memory, cpu, status, wait, receive, generate];
+  const functions = [
+    [1, memory],
+    [15, cpu],
+    [5, status],
+    [5, wait],
+    [10, send],
+    [10, generate],
+  ] as const;
+
+  const allFunctions = functions.flatMap(([count, f]) => Array(count).fill(f));
 
   while (true) {
-    await randItem(functions)();
-    await new Promise((r) => setTimeout(r, 10 * 1000));
+    await randItem(allFunctions)();
+    await new Promise((r) => setTimeout(r, 1000));
   }
 };
 
