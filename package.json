@@ -1,0 +1,25 @@
+{
+  "name": "metrics-generator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node server.js",
+    "server": "nodemon -e ts -w server.ts -x 'ts-node server.ts'",
+    "generate": "nodemon -e ts -w generate.ts -x 'ts-node generate.ts'"
+  },
+  "dependencies": {
+    "cross-fetch": "^3.1.5",
+    "express": "^4.18.1",
+    "multer": "^1.4.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/multer": "^1.4.7",
+    "@types/node": "^17.0.32",
+    "nodemon": "^2.0.16",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4"
+  }
+}
