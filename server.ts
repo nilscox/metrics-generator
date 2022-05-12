@@ -40,40 +40,47 @@ const allocate: RequestHandler = (req, res) => {
   );
 };
 
+const fibo = async (n: number): Promise<number> => {
+  await new Promise((r) => setTimeout(r, 0));
+
+  if (n <= 1) {
+    return n;
+  }
+
+  return (await fibo(n - 1)) + (await fibo(n - 2));
+};
+
 const computeFibo: RequestHandler = (req, res) => {
-  const fibo = (n: number): number => {
-    if (n <= 1) {
-      return n;
-    }
-
-    return fibo(n - 1) + fibo(n - 2);
-  };
-
   const n = parseNum(req.query.n, 9);
 
-  res.send(`fibo(${n}) = ${fibo(n)}`);
+  fibo(n);
+
+  res.send(`computing fibo(${n})`);
+};
+
+const sqrt = (n: number) => {
+  let x = n;
+  let y = 1;
+
+  while (x > y) {
+    x = (x + y) / 2;
+    y = n / x;
+  }
+
+  return x;
 };
 
 const computeSqrt2: RequestHandler = (req, res) => {
-  const sqrt = (n: number) => {
-    let x = n;
-    let y = 1;
-
-    while (x > y) {
-      x = (x + y) / 2;
-      y = n / x;
-    }
-
-    return x;
-  };
-
   const n = parseNum(req.query.n, 1000 * 1000 * 1000);
 
-  for (let i = 0; i < n; ++i) {
-    sqrt(2);
-  }
+  (async () => {
+    for (let i = 0; i < n; ++i) {
+      await new Promise((r) => setTimeout(r, 0));
+      sqrt(2);
+    }
+  })();
 
-  res.send(`computed sqrt(2) ${n} times`);
+  res.send(`computing sqrt(2) ${n} times`);
 };
 
 const returnStatus: RequestHandler = (req, res) => {
